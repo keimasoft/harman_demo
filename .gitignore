@@ -1,0 +1,8 @@
+doc.txt
+build/
+*.o
+*.a
+*.so
+*.d
+.DS_Store
+
