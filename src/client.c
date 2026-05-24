@@ -65,6 +65,14 @@ int main(int argc, char *argv[]) {
     msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, GST_MESSAGE_ERROR | GST_MESSAGE_EOS);
 
     if (msg != NULL) {
+        if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
+            GError *err = NULL;
+            gchar *dbg = NULL;
+            gst_message_parse_error(msg, &err, &dbg);
+            g_printerr("[-] Pipeline error: %s\n", err->message);
+            g_clear_error(&err);
+            g_free(dbg);
+        }
         gst_message_unref(msg);
     }
 

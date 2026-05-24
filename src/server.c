@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     elements = g_key_file_get_string_list(config, "Pipeline", "elements", &num_elements, NULL);
 
     if (num_elements == 0) {
+        g_free(caps_str);
         g_key_file_free(config);
         return -1;
     }
@@ -41,7 +42,12 @@ int main(int argc, char *argv[]) {
 
         GstElement *el = gst_element_factory_make(type, name);
         if (!el) {
+            g_printerr("[-] Failed to create element: %s\n", type);
             g_free(name);
+            g_strfreev(elements);
+            g_free(caps_str);
+            g_key_file_free(config);
+            gst_object_unref(pipeline);
             return -1;
         }
 
@@ -49,7 +55,7 @@ int main(int argc, char *argv[]) {
 
         if (g_strcmp0(type, "udpsrc") == 0) {
             g_object_set(G_OBJECT(el), "port", port, NULL);
-        } else if (g_strcmp0(type, "capsfilter") == 0) {
+        } else if (g_strcmp0(type, "capsfilter") == 0 && caps_str != NULL) {
             GstCaps *caps = gst_caps_from_string(caps_str);
             g_object_set(G_OBJECT(el), "caps", caps, NULL);
             gst_caps_unref(caps);
@@ -57,6 +63,11 @@ int main(int argc, char *argv[]) {
 
         if (previous != NULL) {
             if (!gst_element_link(previous, el)) {
+                g_printerr("[-] Failed to link elements\n");
+                g_strfreev(elements);
+                g_free(caps_str);
+                g_key_file_free(config);
+                gst_object_unref(pipeline);
                 return -1;
             }
         }
@@ -76,12 +87,20 @@ int main(int argc, char *argv[]) {
     msg = gst_bus_timed_pop_filtered(bus, GST_CLOCK_TIME_NONE, GST_MESSAGE_ERROR | GST_MESSAGE_EOS);
 
     if (msg != NULL) {
+        if (GST_MESSAGE_TYPE(msg) == GST_MESSAGE_ERROR) {
+            GError *err = NULL;
+            gchar *dbg = NULL;
+            gst_message_parse_error(msg, &err, &dbg);
+            g_printerr("[-] Pipeline error: %s\n", err->message);
+            g_clear_error(&err);
+            g_free(dbg);
+        }
         gst_message_unref(msg);
     }
 
     gst_object_unref(bus);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
-    
+
     return 0;
 }
