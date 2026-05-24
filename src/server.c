@@ -2,7 +2,7 @@
 #include <glib.h>
 #include <stdio.h>
 
-int main(int argc, char *argv[]) {
+static int run_server(const char *config_path) {
     GKeyFile *config;
     GError *error = NULL;
     GstElement *pipeline, *previous = NULL;
@@ -13,10 +13,8 @@ int main(int argc, char *argv[]) {
     gint port;
     gchar *caps_str;
 
-    gst_init(&argc, &argv);
-
     config = g_key_file_new();
-    if (!g_key_file_load_from_file(config, "./cfg/server.ini", G_KEY_FILE_NONE, &error)) {
+    if (!g_key_file_load_from_file(config, config_path, G_KEY_FILE_NONE, &error)) {
         g_printerr("[-] Config error: %s\n", error->message);
         g_clear_error(&error);
         g_key_file_free(config);
@@ -101,6 +99,10 @@ int main(int argc, char *argv[]) {
     gst_object_unref(bus);
     gst_element_set_state(pipeline, GST_STATE_NULL);
     gst_object_unref(pipeline);
-
     return 0;
+}
+
+int main(int argc, char *argv[]) {
+    gst_init(&argc, &argv);
+    return run_server("./cfg/server.ini");
 }
