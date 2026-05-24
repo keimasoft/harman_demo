@@ -1,8 +1,6 @@
-doc.txt
-build/
-*.o
-*.a
-*.so
-*.d
-.DS_Store
-
+/*
+!cfg
+!src
+!.gitignore
+!README.md
+!Makefile

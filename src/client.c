@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     scale    = gst_element_factory_make("videoscale", "scaler");
     filter   = gst_element_factory_make("capsfilter", "caps_filter");
     flip     = gst_element_factory_make("videoflip", "vertical_flip");
-    invert   = gst_element_factory_make("videobalance", "color_invert");
+    invert   = gst_element_factory_make("frei0r-filter-invert0r", "color_invert");
     conv2    = gst_element_factory_make("videoconvert", "conv_2");
     encoder  = gst_element_factory_make("x264enc", "h264_encoder");
     pay      = gst_element_factory_make("rtph264pay", "rtp_payloader");
@@ -37,8 +37,6 @@ int main(int argc, char *argv[]) {
 
     g_object_set(G_OBJECT(src), "device", "/dev/video0", NULL);
     g_object_set(G_OBJECT(flip), "method", 4, NULL); 
-    g_object_set(G_OBJECT(invert), "hue", 1.0, NULL);
-    
     caps = gst_caps_from_string("video/x-raw, width=640, height=480");
     g_object_set(G_OBJECT(filter), "caps", caps, NULL);
     gst_caps_unref(caps);
