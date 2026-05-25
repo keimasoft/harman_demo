@@ -69,24 +69,15 @@ GST_DEBUG_DUMP_DOT_DIR=/tmp ./client 127.0.0.1 5000
 dot -Tpng /tmp/0.00.00.*-client-pipeline.dot -o client_pipeline.png
 ```
 
-### 3. Network Transport Validation (Layer 4 / Layer 7)
-If the server window opens but remains black, verify whether network packets are actually being routed and arriving at the target port:
+### 3. Network Transport Validation
+If the server window opens but remains black, verify packets are arriving on port 5000:
 ```bash
-# Sniff incoming UDP packets on port 5000 (use 'lo' for localhost, or eth0/wlan0 for remote hosts)
 sudo tcpdump -i lo udp port 5000 -X
 ```
-*Alternatively, capture the traffic into a `.pcap` file and use Wireshark's **Telephony -> RTP -> RTP Streams** analyzer to evaluate network jitter, packet loss, or out-of-order execution sequence numbers.*
+*For deeper analysis, capture to a `.pcap` file and inspect with Wireshark's RTP Streams analyzer.*
 
 ---
 
-## Architectural & Automotive Networking Roadmap (AVB)
+## Note on AVB
 
-To ensure high portability and seamless testing on standard host OS/laptop development setups, this implementation utilizes **RTP over UDP (Layer 4/Transport)**. This choice guarantees that the application runs out-of-the-box in generic IP network environments.
-
-However, in modern production Automotive Ethernet architectures (such as HARMAN Infotainment or ADAS platforms), utilizing the full TCP/IP stack introduces unwanted kernel overhead, jitter, and non-deterministic latencies. 
-
-### Future Transition to AVB/TSN (Layer 2)
-The application design is deliberately modular to support a direct transition to **AVB (Audio Video Bridging - IEEE 1722)**:
-- **No IP Stack**: AVB operates directly at **Layer 2 (Data Link)** using MAC addresses, completely bypassing the OS routing table and socket layers to reduce CPU usage and latency near zero.
-- **GStreamer Modular Swap**: Because the processing steps are decoupled from the transport mechanisms, `rtph264pay` and `udpsink` on the client can be swapped instantly with AVB native plugins (`avtph264pay` and `avtpsink` via `libavtp`), without refactoring any of the underlying video handling logic.
-- **Deterministic Delivery**: In a true automotive target environment (e.g., NXP i.MX8 or Qualcomm platforms), AVB guarantees bounded, deterministic latency for the safety-critical video feed.
+The transport layer uses RTP over UDP for portability. In a production automotive environment, this could be replaced with AVB/TSN (IEEE 1722) for deterministic, Layer 2 delivery.
